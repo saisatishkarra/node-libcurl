@@ -347,6 +347,7 @@ export npm_config_dist_url="$dist_url"
 export npm_config_target="$target"
 export npm_config_target_arch="$target_arch"
 
+
 echo "npm_config_curl_config_bin=$npm_config_curl_config_bin"
 echo "npm_config_curl_static_build=$npm_config_curl_static_build"
 echo "npm_config_node_libcurl_cpp_std=$npm_config_node_libcurl_cpp_std"
@@ -356,6 +357,11 @@ echo "npm_config_runtime=$npm_config_runtime"
 echo "npm_config_dist_url=$npm_config_dist_url"
 echo "npm_config_target=$npm_config_target"
 echo "npm_config_target_arch=$npm_config_target_arch"
+
+# Detect CI mode and set appropriate build metadata
+if [[ "$GITHUB_ACTIONS" == "true" ]]; then
+  echo "npm_config_target_arch=$npm_config_target_arch" >> $GITHUB_OUTPUT
+fi
 
 echo "node version: $(node -v)"
 echo "yarn version: $(yarn -v)"

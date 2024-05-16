@@ -19,6 +19,9 @@ env:
 
 jobs:
   build-and-release-nodejs:
+    permissions:
+      packages: write
+      contents: write # publish sbom to GH releases/tag assets
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -88,9 +91,25 @@ jobs:
         if: startsWith(github.ref, 'refs/tags')
         run: echo "GIT_TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
       - name: "Publish Binary"
+        id: publish_binary
         run: |
           pip install packaging
           GIT_COMMIT=${{ github.sha }} GIT_TAG=$GIT_TAG RUNNER_OS=${{ runner.os }} ./scripts/ci/build.sh
+      # Produces SBOM and CVE report
+      # Helps understand vulnerabilities / license compliance across third party dependencies
+      # Scans everything in home dir
+      # TODO: To avoid scanning entire filesystem, install any binaries within $HOME or ${{github.worspace}}
+      - name: "generate sbom and sca report"
+        id: sca-project
+        uses: Kong/public-shared-actions/security-actions/sca@a98be0184f832cb24a9dd233f99074e8ba17b488 # v2.2.3
+        with:
+          dir: "~" # Scan everything in $HOME for including any global cache files not installed via yarn.lock
+          upload-sbom-release-assets: true
+          asset_prefix: ${{ github.repository }}-${{ github.sha }}-node-${{ runner.os }}-${{ env.NPM_TARGET_ARCH }}
+        env:
+          SYFT_SOURCE_NAME: ${{ github.repository }} # Add source name when scan path from checkout workspace name
+          SYFT_SOURCE_VERSION: ${{ github.sha }}
+          NPM_TARGET_ARCH: ${{ steps.publish_binary.outputs.npm_config_target_arch }}
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v3
@@ -100,6 +119,9 @@ jobs:
           retention-days: 5
 
   build-and-release-electron:
+    permissions:
+      packages: write
+      contents: write # publish sbom to GH releases/tag assets
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -177,9 +199,26 @@ jobs:
         if: startsWith(github.ref, 'refs/tags')
         run: echo "GIT_TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
       - name: "Publish Binary"
+        id: publish_binary
         run: |
           pip install packaging
           GIT_COMMIT=${{ github.sha }} GIT_TAG=$GIT_TAG ./scripts/ci/build.sh
+          # Perform SCA analysis for the code repository
+      # Produces SBOM and CVE report
+      # Helps understand vulnerabilities / license compliance across third party dependencies
+      # Scans everything in home dir
+      # TODO: To avoid scanning entire filesystem, install any binaries within $HOME or ${{github.worspace}}
+      - name: "generate sbom and sca report"
+        id: sca-project
+        uses: Kong/public-shared-actions/security-actions/sca@a98be0184f832cb24a9dd233f99074e8ba17b488 # v2.2.3
+        with:
+          dir: "~" # Scan everything in $HOME for including any global cache files not installed via yarn.lock
+          upload-sbom-release-assets: true
+          asset_prefix: ${{ github.repository }}-${{ github.sha }}-electron-${{ matrix.electron-version }}-${{ runner.os }}-${{ env.NPM_TARGET_ARCH }}
+        env:
+          SYFT_SOURCE_NAME: ${{ github.repository }} # Add source name when scan path from checkout workspace name
+          SYFT_SOURCE_VERSION: ${{ github.sha }}
+          NPM_TARGET_ARCH: ${{ steps.publish_binary.outputs.npm_config_target_arch }}
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v3
@@ -189,6 +228,9 @@ jobs:
           retention-days: 5
 
   build-and-release-nodejs-windows:
+    permissions:
+      packages: write
+      contents: write # publish sbom to GH releases/tag assets
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -230,8 +272,25 @@ jobs:
           pip install packaging
           yarn node-pre-gyp package testpackage --verbose
           node scripts\module-packaging.js --publish $(yarn -s node-pre-gyp reveal staged_tarball --silent)
+      # Produces SBOM and CVE report
+      # Helps understand vulnerabilities / license compliance across third party dependencies
+      # Scans everything in home dir
+      # TODO: To avoid scanning entire filesystem, install any binaries within $HOME or ${{github.worspace}}
+      - name: "generate sbom and sca report"
+        id: sca-project
+        uses: Kong/public-shared-actions/security-actions/sca@a98be0184f832cb24a9dd233f99074e8ba17b488 # v2.2.3
+        with:
+          dir: "."
+          upload-sbom-release-assets: true
+          asset_prefix: ${{ github.repository }}-${{ github.sha }}-node-${{ runner.os }}-${{ runner.arch }}
+        env:
+          SYFT_SOURCE_NAME: ${{ github.repository }} # Add source name when scan path from checkout workspace name
+          SYFT_SOURCE_VERSION: ${{ github.sha }}
 
   build-and-release-electron-windows:
+    permissions:
+      packages: write
+      contents: write # publish sbom to GH releases/tag assets
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -279,3 +338,17 @@ jobs:
           pip install packaging
           yarn node-pre-gyp package testpackage --verbose
           node scripts\module-packaging.js --publish $(yarn -s node-pre-gyp reveal staged_tarball --silent)
+      # Produces SBOM and CVE report
+      # Helps understand vulnerabilities / license compliance across third party dependencies
+      # Scans everything in home dir
+      # TODO: To avoid scanning entire filesystem, install any binaries within $HOME or ${{github.worspace}}
+      - name: "generate sbom and sca report"
+        id: sca-project
+        uses: Kong/public-shared-actions/security-actions/sca@a98be0184f832cb24a9dd233f99074e8ba17b488 # v2.2.3
+        with:
+          dir: "."
+          upload-sbom-release-assets: true
+          asset_prefix: ${{ github.repository }}-${{ github.sha }}-electron-${{ matrix.electron-version }}-${{ runner.os }}-${{ runner.arch }}
+        env:
+          SYFT_SOURCE_NAME: ${{ github.repository }} # Add source name when scan path from checkout workspace name
+          SYFT_SOURCE_VERSION: ${{ github.sha }}
