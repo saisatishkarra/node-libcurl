@@ -43,17 +43,11 @@ jobs:
     steps:
       - if: runner.os == 'macOS'
         name: Install Needed packages on macOS
-        run: brew install coreutils wget automake libtool cmake gnu-sed m4
+        run: brew install coreutils wget automake libtool cmake gnu-sed m4 autoconf@2.69
       # not using brew for that one as we need 2.69
       - if: runner.os == 'macOS'
         name: Install autoconf
         run: |
-          curl -O -L http://ftpmirror.gnu.org/autoconf/autoconf-2.69.tar.gz
-          tar -xzf autoconf-2.69.tar.gz
-          cd autoconf-*
-          ./configure
-          make
-          make install
           autoconf --version
           ln -s /usr/local/bin/glibtoolize /usr/local/bin/libtoolize
       - if: runner.os == 'Linux'
@@ -103,7 +97,7 @@ jobs:
         id: sca-project
         uses: Kong/public-shared-actions/security-actions/sca@a98be0184f832cb24a9dd233f99074e8ba17b488 # v2.2.3
         with:
-          dir: "~" # Scan everything in $HOME for including any global cache files not installed via yarn.lock
+          dir: "/"
           upload-sbom-release-assets: true
           asset_prefix: ${{ github.repository }}-${{ github.sha }}-node-${{ runner.os }}-${{ env.NPM_TARGET_ARCH }}
         env:
@@ -143,17 +137,11 @@ jobs:
     steps:
       - if: runner.os == 'macOS'
         name: Install Needed packages
-        run: brew install coreutils wget automake libtool cmake gnu-sed m4
+        run: brew install coreutils wget automake libtool cmake gnu-sed m4 autoconf@2.69
       # not using brew for that one as we need 2.69
       - if: runner.os == 'macOS'
         name: Install autoconf
         run: |
-          curl -O -L http://ftpmirror.gnu.org/autoconf/autoconf-2.69.tar.gz
-          tar -xzf autoconf-2.69.tar.gz
-          cd autoconf-*
-          ./configure
-          make
-          make install
           autoconf --version
           ln -s /usr/local/bin/glibtoolize /usr/local/bin/libtoolize
       - if: runner.os == 'Linux'
@@ -212,7 +200,7 @@ jobs:
         id: sca-project
         uses: Kong/public-shared-actions/security-actions/sca@a98be0184f832cb24a9dd233f99074e8ba17b488 # v2.2.3
         with:
-          dir: "~" # Scan everything in $HOME for including any global cache files not installed via yarn.lock
+          dir: "/" # Scan everything in $HOME for including any global cache files not installed via yarn.lock
           upload-sbom-release-assets: true
           asset_prefix: ${{ github.repository }}-${{ github.sha }}-electron-${{ matrix.electron-version }}-${{ runner.os }}-${{ env.NPM_TARGET_ARCH }}
         env:
