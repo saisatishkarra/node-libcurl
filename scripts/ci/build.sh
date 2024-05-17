@@ -358,11 +358,6 @@ echo "npm_config_dist_url=$npm_config_dist_url"
 echo "npm_config_target=$npm_config_target"
 echo "npm_config_target_arch=$npm_config_target_arch"
 
-# Detect CI mode and set appropriate build metadata
-if [[ "$GITHUB_ACTIONS" == "true" ]]; then
-  echo "npm_config_target_arch=$npm_config_target_arch" >> $GITHUB_OUTPUT
-fi
-
 echo "node version: $(node -v)"
 echo "yarn version: $(yarn -v)"
 
